@@ -1,0 +1,30 @@
+Explain Linear disciminant analysis model and how does it compare to bayesian?
+
+why use k-fold cross validation?
+
+https://www.r-bloggers.com/cross-validation-for-predictive-analytics-using-r/
+
+these ideas bring us to the conclusion that it is not advisable to compare the predictive accuracy of a set of models using the same observations used for estimating the models. Therefore, for assessing the models’ predictive performance we should use an independent set of data (the test sample). Then, the model showing the lowest error on the test sample (i.e., the lowest test error) is identified as the best.
+
+
+
+
+how to remove near zero variance variables?
+
+what is PCA?
+
+how do you identify the most important variables?
+
+how do you drop a column in R by name?
+
+what are the tuning parameters for random forests and LDA?
+
+
+Explain bias variance tradeoff?
+
+	Expected Test Error = Irreducible Noise + (Model Bias)^2 + Model Variance
+which is known as the bias-variance decomposition. The first term is the data generating process variance.
+This term is unavoidable because we live in a noisy stochastic world, where even the best ideal model has non-zero error.
+	 The second term originates from the difficulty to catch the correct functional form of the relationship that links the dependent and independent variables (sometimes it is also called the approximation bias). 
+	The last term is due to the fact that we estimate our models using only a limited amount of data. Fortunately, this terms gets closer and closer to zero as long as we collect more and more training data. 	Typically, the more complex (i.e., flexible) we make the model, the lower the bias but the higher the variance. This general phenomenon is known as thebias-variance trade-off, and the challenge is to find a model which provides a good compromise between these two issues.
+
