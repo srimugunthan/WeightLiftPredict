@@ -243,6 +243,10 @@ cleantrain <- cleantrain[ , !(names(cleantrain) %in% drops)]
 
 postclean_explore(cleantrain, cleantest)
 
+# now combine the training and test data so that when we do prediction we dont get the  error 
+# ("Type of predictors in new data do not match that of the training data.")  
+# 
+# 
 testnumrows <- nrow(cleantest)
 cleantest[,"classe"] <- NA
 combinedData <- rbind(cleantrain,cleantest)
@@ -290,7 +294,4 @@ confusionMatrix(pred.lda, test.batch$classe)
 
 
 
-# attach  the classe variable to clean train.
-# cleanTrainFinal <- cleantrain
-# cleanTestFinal <- cleantest
-# rforestmodel(cleanTrainFinal, cleanTestFinal)
+

@@ -6,6 +6,10 @@ https://www.r-bloggers.com/cross-validation-for-predictive-analytics-using-r/
 
 http://stats.stackexchange.com/questions/61090/how-to-split-a-data-set-to-do-10-fold-cross-validation
 
+http://stats.stackexchange.com/questions/27730/choice-of-k-in-k-fold-cross-validation
+
+https://github.com/jeffwen/Kth_Fold_Cross_Validation_R/blob/master/cross_validation_code.R
+
 these ideas bring us to the conclusion that it is not advisable to compare the predictive accuracy of a set of models using the same observations used for estimating the models. Therefore, for assessing the models’ predictive performance we should use an independent set of data (the test sample). Then, the model showing the lowest error on the test sample (i.e., the lowest test error) is identified as the best.
 
 
