@@ -1,7 +1,7 @@
 library(caret)
 library(randomForest)
 
-mainDir="/home/srimugunthan/Dropbox/HopkinsProject"
+mainDir="/home/sdhandap/WeightLiftPredict"
 
 preclean_explore <- function(traindata,testdata)
 {
@@ -224,6 +224,7 @@ pmltestdata <- read.table("pml-testing.csv",sep=",",header=TRUE)
 
 preclean_explore(pmltraindata, pmltestdata)
 
+
 cleantrain <- eliminate_NAs(pmltraindata)
 cleantest <- eliminate_NAs(pmltestdata)
 
@@ -233,11 +234,63 @@ cleantest <- eliminate_Nulls(cleantest)
 cleantrain <- eliminate_zeroVarFactors(cleantrain)
 cleantest <- eliminate_zeroVarFactors(cleantest)
 
+answer <- cleantest["problem_id"]
+drops <- c("problem_id","X")
+cleantest <- cleantest[ , !(names(cleantest) %in% drops)]
+cleantrain <- cleantrain[ , !(names(cleantrain) %in% drops)]
 #do_some_visualisation(cleantrain)
   
+
 postclean_explore(cleantrain, cleantest)
 
+testnumrows <- nrow(cleantest)
+cleantest[,"classe"] <- NA
+combinedData <- rbind(cleantrain,cleantest)
+allrows <- nrow(combinedData)
+
+finaltest <- combinedData[(allrows-testnumrows+1):allrows, ]
+trainingset <- combinedData[1:(allrows-testnumrows), ]
+
+
+# cross validation. First do simple train test and validation split
+training.rows <- createDataPartition(trainingset$classe,  p = 0.8, list = FALSE)
+
+
+train.batch <- trainingset[training.rows, ]
+test.batch <- trainingset[-training.rows, ]
+colnames <- names(trainingset)
+
+
+dependentvarname <- "classe"
+AllVariables <- names(trainingset)
+PredictorVariables <- setdiff(AllVariables, dependentvarname)
+Formula <- formula(paste( paste(dependentvarname, " ~ ", sep =""), 
+                            paste(PredictorVariables, collapse=" + ")))
+
+print(Formula)
+rf_fit <- randomForest(Formula,
+                         data=train.batch, 
+                         importance=TRUE, 
+                         ntree=2000)
+# 
+pred.rf <- predict(rf_fit, test.batch)
+# 
+confusionMatrix(pred.rf, test.batch$classe)
+
+
+
+ctrl <- trainControl(method = "cv")
+model_lda <- train(train.batch$classe ~ ., method = "lda", trControl = ctrl, data = train.batch)
+pred.lda <- predict(model_lda, test.batch)
+
+confusionMatrix(pred.lda, test.batch$classe)
+
+
+
+
+
+
 # attach  the classe variable to clean train.
-cleanTrainFinal <- cleantrain
-cleanTestFinal <- cleantest
-rforestmodel(cleanTrainFinal, cleanTestFinal)
+# cleanTrainFinal <- cleantrain
+# cleanTestFinal <- cleantest
+# rforestmodel(cleanTrainFinal, cleanTestFinal)
