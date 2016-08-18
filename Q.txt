@@ -1,31 +1,37 @@
 Explain Linear disciminant analysis model and how does it compare to bayesian?
 
+https://www.r-bloggers.com/computing-and-visualizing-lda-in-r/
+http://www.statmethods.net/advstats/discriminant.html
+=======================================================================================================================================
 why use k-fold cross validation?
 
-https://www.r-bloggers.com/cross-validation-for-predictive-analytics-using-r/
+	https://www.r-bloggers.com/cross-validation-for-predictive-analytics-using-r/
 
-http://stats.stackexchange.com/questions/61090/how-to-split-a-data-set-to-do-10-fold-cross-validation
+	http://stats.stackexchange.com/questions/61090/how-to-split-a-data-set-to-do-10-fold-cross-validation
 
-http://stats.stackexchange.com/questions/27730/choice-of-k-in-k-fold-cross-validation
+	http://stats.stackexchange.com/questions/27730/choice-of-k-in-k-fold-cross-validation
+	
+	https://github.com/jeffwen/Kth_Fold_Cross_Validation_R/blob/master/cross_validation_code.R
 
-https://github.com/jeffwen/Kth_Fold_Cross_Validation_R/blob/master/cross_validation_code.R
+	these ideas bring us to the conclusion that it is not advisable to compare the predictive accuracy of a set of models using the same observations used for estimating the models.
+	Therefore, for assessing the models’ predictive performance we should use an independent set of data (the test sample). 
+	Then, the model showing the lowest error on the test sample (i.e., the lowest test error) is identified as the best.
 
-these ideas bring us to the conclusion that it is not advisable to compare the predictive accuracy of a set of models using the same observations used for estimating the models. Therefore, for assessing the models’ predictive performance we should use an independent set of data (the test sample). Then, the model showing the lowest error on the test sample (i.e., the lowest test error) is identified as the best.
+	http://stats.stackexchange.com/questions/103459/how-do-i-know-which-method-of-cross-validation-is-best
 
-
-
-
+=======================================================================================================================================
 how to remove near zero variance variables?
 
+=======================================================================================================================================
 what is PCA?
-
+=======================================================================================================================================
 how do you identify the most important variables?
-
+=======================================================================================================================================
 how do you drop a column in R by name?
-
+=======================================================================================================================================
 what are the tuning parameters for random forests and LDA?
 
-
+=======================================================================================================================================
 Explain bias variance tradeoff?
 
 	Expected Test Error = Irreducible Noise + (Model Bias)^2 + Model Variance
@@ -34,4 +40,4 @@ This term is unavoidable because we live in a noisy stochastic world, where even
 	 The second term originates from the difficulty to catch the correct functional form of the relationship that links the dependent and independent variables (sometimes it is also called the approximation bias). 
 	The last term is due to the fact that we estimate our models using only a limited amount of data. Fortunately, this terms gets closer and closer to zero as long as we collect more and more training data. 	Typically, the more complex (i.e., flexible) we make the model, the lower the bias but the higher the variance. This general phenomenon is known as thebias-variance trade-off, and the challenge is to find a model which provides a good compromise between these two issues.
 
-
+=======================================================================================================================================

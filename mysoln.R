@@ -217,6 +217,7 @@ do_some_visualisation <- function(tdata)
   featurePlot(x=tdata[,1:7], y=tdata$classe, plot="pairs")
   #dev.off()
 }
+
 #setwd("/home/srimugunthan/Dropbox/HopkinsProject")
 setwd(mainDir)
 pmltraindata <- read.table("pml-training.csv",sep=",",header=TRUE)
@@ -241,6 +242,9 @@ cleantrain <- cleantrain[ , !(names(cleantrain) %in% drops)]
 #do_some_visualisation(cleantrain)
   
 
+
+
+
 postclean_explore(cleantrain, cleantest)
 
 # now combine the training and test data so that when we do prediction we dont get the  error 
@@ -251,43 +255,87 @@ testnumrows <- nrow(cleantest)
 cleantest[,"classe"] <- NA
 combinedData <- rbind(cleantrain,cleantest)
 allrows <- nrow(combinedData)
-
 finaltest <- combinedData[(allrows-testnumrows+1):allrows, ]
 trainingset <- combinedData[1:(allrows-testnumrows), ]
 
+## do PCA 
+
+nonNumericVars <- c("user_name","classe","cvtd_timestamp")
+pcadata <- combinedData[ , !(names(combinedData) %in% nonNumericVars)]
+pca <- prcomp(pcadata, scale = TRUE)
+biplot(pca, scale = 0)
+std_dev <- pca$sdev
+pr_var <- std_dev^2
+prop_varex <- pr_var/sum(pr_var)
+
+plot(prop_varex, xlab = "Principal Component",
+           ylab = "Proportion of Variance Explained",
+           type = "b")
+
+plot(cumsum(prop_varex), xlab = "Principal Component",
+           ylab = "Cumulative Proportion of Variance Explained",
+           type = "b")
+
+
+selectcols = which(prop_varex >= 0.002)
+dataAfterPCA <- pcadata[,selectcols]
+pr_cols <- names(dataAfterPCA)
+pr_cols <- c(pr_cols, "classe")
+
+
+
+train.pca.data <- trainingset[,(names(trainingset) %in% pr_cols)]
+test.pca.data <- finaltest[,(names(finaltest) %in% pr_cols)]
 
 # cross validation. First do simple train test and validation split
-training.rows <- createDataPartition(trainingset$classe,  p = 0.8, list = FALSE)
+training.rows <- createDataPartition(train.pca.data$classe,  p = 0.8, list = FALSE)
 
 
-train.batch <- trainingset[training.rows, ]
-test.batch <- trainingset[-training.rows, ]
-colnames <- names(trainingset)
+train.batch <- train.pca.data[training.rows, ]
+test.batch <- train.pca.data[-training.rows, ]
+#k <- 5 # k-fold cross-validation
+#folds <- createFolds(y = trainingset$classe, k = k, list = TRUE, returnTrain = TRUE)
+
+
 
 
 dependentvarname <- "classe"
-AllVariables <- names(trainingset)
+AllVariables <- names(train.pca.data)
 PredictorVariables <- setdiff(AllVariables, dependentvarname)
 Formula <- formula(paste( paste(dependentvarname, " ~ ", sep =""), 
                             paste(PredictorVariables, collapse=" + ")))
-
 print(Formula)
+
+
 rf_fit <- randomForest(Formula,
-                         data=train.batch, 
-                         importance=TRUE, 
-                         ntree=2000)
-# 
+                       data=train.batch, 
+                       importance=TRUE, 
+                       ntree=2000)
 pred.rf <- predict(rf_fit, test.batch)
-# 
 confusionMatrix(pred.rf, test.batch$classe)
+accuracy.rf <- (round(mean(pred.rf == test.batch$classe),3))
+print(accuracy.rf)
 
-
-
-ctrl <- trainControl(method = "cv")
-model_lda <- train(train.batch$classe ~ ., method = "lda", trControl = ctrl, data = train.batch)
+model_lda <- train(Formula, method = "lda", data = train.batch)
 pred.lda <- predict(model_lda, test.batch)
-
 confusionMatrix(pred.lda, test.batch$classe)
+accuracy.lda <-(round(mean(pred.lda == test.batch$classe),3))
+
+print(accuracy.lda)
+
+
+
+if(accuracy.rf >= accuracy.lda) {
+
+  pred.final <- predict(rf_fit, finaltest)
+  
+  
+}else {
+  pred.final <- predict(model_lda, finaltest)
+}
+
+print(pred.final)
+  
 
 
 
