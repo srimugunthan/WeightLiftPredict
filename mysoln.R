@@ -1,240 +1,67 @@
+#' # Project for Practical Machine learning course
+#' ****
+#' The solution follows the below steps
+#' 
+#' 1. Read in the input train and test data and understand it
+#' 
+#' 2. Clean up the data
+#' 
+#' 3. Do Principal component analysis and find the most important variables.
+#' 
+#' 4. Create cross validation datasets
+#' 
+#' 5. Fit two models, LDA and random forests
+#' 
+#' We select the model with the greater accuracy
+#' 
+#' ******
+#' 
 library(caret)
 library(randomForest)
 
+
 mainDir="/home/sdhandap/WeightLiftPredict"
-
-preclean_explore <- function(traindata,testdata)
-{
- #sink(file = "preclean-exploration.txt")
-  cat("=============================\n")
-  str(traindata)
-  cat("\n")
-  str(testdata)
-  
-  
-  
-  trainfeatures <- names(traindata)
-  testfeatures <- names(testdata)
-  
-
-  cat("\nFeatures in traindata that is not in testdata:")
-  
-  print(trainfeatures[which(trainfeatures != testfeatures)])
-  
-  
-  cat("\nFeatures in testdata that is not in traindata:")
-  print(testfeatures[which(trainfeatures != testfeatures)])
-  
-  #sink(NULL)
-  
-}
-
-postclean_explore <- function(traindata,testdata)
-{
-  # str(train, test)
-  # summary(train, test)
-  # feature plot
-  # classe with every variable
-  
-  #sink(file = "preclean-exploration.txt")
-  cat("=============================\n")
-  str(traindata)
-  cat("\n")
-  str(testdata)
-  
-  
-  cat("=============================\n")
-  summary(traindata)
-  cat("=============================\n")
-  summary(testdata)
-  
-  
-  
-  
-  trainfeatures <- names(traindata)
-  testfeatures <- names(testdata)
-  
-  
-  
-  cat("\nFeatures in traindata that is not in testdata:")
-  
-  print(trainfeatures[which(trainfeatures != testfeatures)])
-  
-  
-  cat("\nFeatures in testdata that is not in traindata:")
-  print(testfeatures[which(trainfeatures != testfeatures)])
-  
-  #sink(NULL)
-  
-  
-}
-
-eliminate_NAs <- function(tdata)
-{
-
-  #if 80% of a feature variable is NA , eliminate it 
-  
-  features <- names(tdata)
-  cleant <- tdata
-  for (f in features)
-  {
-  
-    nasum <- sum(is.na(tdata[f]))
-    if (nasum > 0.2*nrow(tdata[f]))
-    {
-     # remove it
-      colnum = which( colnames(cleant)==f )
-      cleant <- cleant[-colnum]
-    }
-                 
-  }
-    
-  return (cleant)
-  
-}
-
-
-eliminate_Nulls <- function(tdata)
-{
-  
-  #if 80% of a feature variable is Null , eliminate it 
-  
-  features <- names(tdata)
-  cleant <- tdata
-  for (f in features)
-  {
-    
-    nasum <- sum(tdata[f] == "")
-    if (nasum > 0.2*nrow(tdata[f]))
-    {
-      # remove it
-      colnum = which( colnames(cleant)==f )
-      cleant <- cleant[-colnum]
-    }
-    
-  }
-  
-  return (cleant)
-  
-}
-
-eliminate_zeroVarFactors <- function(tdata)
-{
-  nzv <- nearZeroVar(tdata)
-  filteredtrain <- tdata[, -nzv]
-  return (filteredtrain)
-  
-}
-
-printmodel_diagnostics <- function(modelObj, predicted, expected)
-{
-  
-  print(modelObj)
-  print("======out of sample error:======")
-  print(sum(predicted != expected)/length(expected))
-  print(confusionMatrix(predicted, expected))
-}
-
-#**************************
-#return the rules of a tree
-#**************************
-getConds<-function(tree){
-  #store all conditions into a list
-  conds<-list()
-  #start by the terminal nodes and find previous conditions
-  id.leafs<-which(tree$status==-1)
-  j<-0
-  for(i in id.leafs){
-    j<-j+1
-    prevConds<-prevCond(tree,i)
-    conds[[j]]<-prevConds$cond
-    while(prevConds$id>1){
-      prevConds<-prevCond(tree,prevConds$id)
-      conds[[j]]<-paste(conds[[j]]," & ",prevConds$cond)
-      if(prevConds$id==1){
-        conds[[j]]<-paste(conds[[j]]," => ",tree$prediction[i])
-        break()
-      }
-    }
-    
-  }
-  
-  return(conds)
-}
-
-#**************************
-#find the previous conditions in the tree
-#**************************
-prevCond<-function(tree,i){
-  if(i %in% tree$right_daughter){
-    id<-which(tree$right_daughter==i)
-    cond<-paste(tree$split_var[id],">",tree$split_point[id])
-  }
-  if(i %in% tree$left_daughter){
-    id<-which(tree$left_daughter==i)
-    cond<-paste(tree$split_var[id],"<",tree$split_point[id])
-  }
-  
-  return(list(cond=cond,id=id))
-}
-
-#remove spaces in a word
-collapse<-function(x){
-  x<-sub(" ","_",x)
-  
-  return(x)
-}
-
-
-
-
-rforestmodel <- function(train, test) {
-  subDir="rforestmodel"  
-  dir.create(file.path(mainDir, subDir), showWarnings = FALSE)
-  setwd(file.path(mainDir, subDir))
-  
-  
-  
-  set.seed(33833)
-  model <- randomForest(classe ~ ., train)
-  pred_training <- predict(model, train)
-  
-  printmodel_diagnostics(rforestmodel, pred_training, train$classe)
-  
-  tree <- getTree(model,1,labelVar=TRUE)
-  
-  #rename the name of the column
-  colnames(tree)<-sapply(colnames(tree),collapse)
-  rules<-getConds(tree)
-  print(rules)
-  
-  
-}
-
-do_some_visualisation <- function(tdata)
-{
-  #pdf("mygraph.pdf", width=7, height=7)
-  featurePlot(x=tdata[,1:7], y=tdata$classe, plot="pairs")
-  #dev.off()
-}
-
-#setwd("/home/srimugunthan/Dropbox/HopkinsProject")
 setwd(mainDir)
+source("helperfuncs.R")
+
+#' ##STEP1: Read in the input train and test data and understand it
+#' 
+#'  Read in the training and test data
+#'  
+#'  
 pmltraindata <- read.table("pml-training.csv",sep=",",header=TRUE)
 pmltestdata <- read.table("pml-testing.csv",sep=",",header=TRUE)
 
+#' 
+#'  Explore the structure of the data 
+#'  
+#' 
 preclean_explore(pmltraindata, pmltestdata)
 
 
+#' 
+#' ##STEP2: Clean up the data
+#' 
+#'
+#'  start with eliminating the NA variables
+#'  
 cleantrain <- eliminate_NAs(pmltraindata)
 cleantest <- eliminate_NAs(pmltestdata)
 
+#' 
+#' next eliminating the NULLs 
+#' 
 cleantrain <- eliminate_Nulls(cleantrain)
 cleantest <- eliminate_Nulls(cleantest)
 
+#' next eliminating the near zero variance variables 
+#' 
 cleantrain <- eliminate_zeroVarFactors(cleantrain)
 cleantest <- eliminate_zeroVarFactors(cleantest)
 
+#'
+#'  Drop unnecessary varibles for prediction
+#' 
 answer <- cleantest["problem_id"]
 drops <- c("problem_id","X")
 cleantest <- cleantest[ , !(names(cleantest) %in% drops)]
@@ -244,13 +71,17 @@ cleantrain <- cleantrain[ , !(names(cleantrain) %in% drops)]
 
 
 
+#'
+#' Just explore the data again after exploration
+#' 
 
 postclean_explore(cleantrain, cleantest)
 
-# now combine the training and test data so that when we do prediction we dont get the  error 
-# ("Type of predictors in new data do not match that of the training data.")  
-# 
-# 
+#'
+#' now combine the training and test data so that when we do prediction we dont get the  errors like mismatch of type of predictors
+#' ("Type of predictors in new data do not match that of the training data.")  
+#' 
+ 
 testnumrows <- nrow(cleantest)
 cleantest[,"classe"] <- NA
 combinedData <- rbind(cleantrain,cleantest)
@@ -258,7 +89,15 @@ allrows <- nrow(combinedData)
 finaltest <- combinedData[(allrows-testnumrows+1):allrows, ]
 trainingset <- combinedData[1:(allrows-testnumrows), ]
 
-## do PCA 
+
+#'
+#' We are done with the data clean up stage
+#' 
+
+#' 
+#' ##STEP3: Do Principal component analysis
+#' 
+#' 
 
 nonNumericVars <- c("user_name","classe","cvtd_timestamp")
 pcadata <- combinedData[ , !(names(combinedData) %in% nonNumericVars)]
@@ -287,15 +126,35 @@ pr_cols <- c(pr_cols, "classe")
 train.pca.data <- trainingset[,(names(trainingset) %in% pr_cols)]
 test.pca.data <- finaltest[,(names(finaltest) %in% pr_cols)]
 
-# cross validation. First do simple train test and validation split
+
+#'
+#' Now we are done with the principal component analysis.
+#' Next step is to split the data for cross validatiopn
+#' do the  simple train test and validation split
+#' 
+
+
+#' 
+#' ##STEP4: Create cross validation datasets
+#' 
+#' 
 training.rows <- createDataPartition(train.pca.data$classe,  p = 0.8, list = FALSE)
 
 
 train.batch <- train.pca.data[training.rows, ]
 test.batch <- train.pca.data[-training.rows, ]
-#k <- 5 # k-fold cross-validation
-#folds <- createFolds(y = trainingset$classe, k = k, list = TRUE, returnTrain = TRUE)
 
+
+
+#'
+#' Now we have the data split into three: the train.batch, test.batch and the finaltest dataset
+#' 
+#' 
+
+#' 
+#' ##STEP5: Model creation and Validation
+#' 
+#' 
 
 
 
@@ -306,7 +165,10 @@ Formula <- formula(paste( paste(dependentvarname, " ~ ", sep =""),
                             paste(PredictorVariables, collapse=" + ")))
 print(Formula)
 
-
+#'
+#' Fit the random forest model
+#' 
+#' 
 rf_fit <- randomForest(Formula,
                        data=train.batch, 
                        importance=TRUE, 
@@ -314,32 +176,51 @@ rf_fit <- randomForest(Formula,
 pred.rf <- predict(rf_fit, test.batch)
 confusionMatrix(pred.rf, test.batch$classe)
 accuracy.rf <- (round(mean(pred.rf == test.batch$classe),3))
+
+#'
+#' The accuracy in the random forest model
+#' 
+#' 
 print(accuracy.rf)
+
+#'
+#' Fit the Linear discriminant analysis model
+#' 
+#' 
 
 model_lda <- train(Formula, method = "lda", data = train.batch)
 pred.lda <- predict(model_lda, test.batch)
 confusionMatrix(pred.lda, test.batch$classe)
 accuracy.lda <-(round(mean(pred.lda == test.batch$classe),3))
 
+#'
+#' The accuracy in the LDA model is
+#' 
+#' 
 print(accuracy.lda)
 
 
 
 if(accuracy.rf >= accuracy.lda) {
 
+  #'
+  #' Select Random Forest model for the final prediction
+  #' 
+  #' 
   pred.final <- predict(rf_fit, finaltest)
   
   
 }else {
+  #'
+  #' Select LDA model for the final prediction
+  #' 
+  #' 
   pred.final <- predict(model_lda, finaltest)
 }
+#'
+#' This is the final prediction output.
+#' 
+#' 
 
 print(pred.final)
   
-
-
-
-
-
-
-
